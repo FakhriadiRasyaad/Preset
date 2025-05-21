@@ -1,0 +1,251 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Photo Editor</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+        .slider-container { margin: 10px 0; display: flex; align-items: center; }
+        .slider-container label { width: 220px; }
+        .slider-container input[type="range"] { flex-grow: 1; margin: 0 10px; }
+        .slider-container input[type="number"] { width: 60px; }
+        img { max-width: 100%; height: auto; margin-bottom: 20px; border: 1px solid #ccc; }
+        .sliders { max-height: 400px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background: white; }
+    </style>
+</head>
+<body>
+    <h2>Edit Foto Live</h2>
+    <input type="file" id="upload" accept="image/*"><br><br>
+
+    <img id="preview" src="" alt="Preview hasil edit akan muncul di sini">
+
+    <div class="sliders" id="sliderSection"></div>
+
+    <script>
+        const PARAMS = [
+            "IncrementalTemperature", "IncrementalTint", "Exposure2012", "Contrast2012", "Highlights2012",
+            "Shadows2012", "Whites2012", "Blacks2012", "Texture", "Clarity2012", "Dehaze", "Vibrance",
+            "Saturation", "ParametricShadows", "ParametricDarks", "ParametricLights", "ParametricHighlights",
+            "ParametricShadowSplit", "ParametricMidtoneSplit", "ParametricHighlightSplit", "Sharpness",
+            "LuminanceSmoothing", "ColorNoiseReduction", "HueAdjustmentRed", "HueAdjustmentOrange",
+            "HueAdjustmentYellow", "HueAdjustmentGreen", "HueAdjustmentAqua", "HueAdjustmentBlue",
+            "HueAdjustmentPurple", "HueAdjustmentMagenta", "SaturationAdjustmentRed", "SaturationAdjustmentOrange",
+            "SaturationAdjustmentYellow", "SaturationAdjustmentGreen", "SaturationAdjustmentAqua",
+            "SaturationAdjustmentBlue", "SaturationAdjustmentPurple", "SaturationAdjustmentMagenta",
+            "LuminanceAdjustmentRed", "LuminanceAdjustmentOrange", "LuminanceAdjustmentYellow",
+            "LuminanceAdjustmentGreen", "LuminanceAdjustmentAqua", "LuminanceAdjustmentBlue",
+            "LuminanceAdjustmentPurple", "LuminanceAdjustmentMagenta", "SplitToningShadowHue",
+            "SplitToningShadowSaturation", "SplitToningHighlightHue", "SplitToningHighlightSaturation",
+            "SplitToningBalance", "ColorGradeMidtoneHue",
+            "ColorGradeMidtoneSat", "ColorGradeShadowLum", "ColorGradeMidtoneLum", "ColorGradeHighlightLum",
+            "ColorGradeBlending", "ColorGradeGlobalHue", "ColorGradeGlobalSat", "ColorGradeGlobalLum",
+            "AutoLateralCA", "LensProfileEnable", "LensManualDistortionAmount", "VignetteAmount",
+            "DefringePurpleAmount", "DefringePurpleHueLo", "DefringePurpleHueHi",
+            "DefringeGreenAmount", "DefringeGreenHueLo", "DefringeGreenHueHi",
+            "GrainAmount", "PostCropVignetteAmount", "ShadowTint",
+            "RedHue", "RedSaturation", "GreenHue", "GreenSaturation", "BlueHue", "BlueSaturation"
+        ];
+
+        let sliderValues = {};
+        let uploadedImage = null;
+
+        const sliderSection = document.getElementById('sliderSection');
+        PARAMS.forEach(p => {
+            sliderValues[p] = 0;
+            const container = document.createElement('div');
+            container.className = 'slider-container';
+            container.innerHTML = `
+                <label for="${p}">${p}</label>
+                <input type="range" id="${p}" name="${p}" min="-100" max="100" value="0" oninput="syncSlider('${p}', this.value)">
+                <input type="number" id="${p}_number" min="-100" max="100" value="0" onchange="syncNumber('${p}', this.value)">
+            `;
+            sliderSection.appendChild(container);
+        });
+
+        function syncSlider(param, value) {
+            document.getElementById(param + '_number').value = value;
+            updateParam(param, value);
+        }
+
+        function syncNumber(param, value) {
+            document.getElementById(param).value = value;
+            updateParam(param, value);
+        }
+
+        function updateParam(param, value) {
+            sliderValues[param] = parseFloat(value);
+            sendToServer();
+        }
+
+        document.getElementById('upload').addEventListener('change', async function () {
+            const file = this.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('image', file);
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                uploadedImage = data.filename;
+                sendToServer();
+            }
+        });
+
+        async function sendToServer() {
+            if (!uploadedImage) return;
+
+            const res = await fetch('/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: uploadedImage, params: sliderValues })
+            });
+
+            const data = await res.json();
+            document.getElementById('preview').src = `data:image/jpeg;base64,${data.image}`;
+        }
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Photo Editor</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        .editor {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .preview-box {
+            flex: 1;
+        }
+        .preview-box img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+        .sliders {
+            flex: 1;
+            max-height: 80vh;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: white;
+        }
+        .slider-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .slider-container label {
+            width: 220px;
+        }
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        .slider-container input[type="number"] {
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Edit Foto Live</h2>
+    <input type="file" id="upload" accept="image/*"><br><br>
+
+    <div class="editor">
+        <div class="preview-box">
+            <img id="preview" src="" alt="Preview hasil edit akan muncul di sini">
+        </div>
+        <div class="sliders" id="sliderSection"></div>
+    </div>
+
+    <script>
+        const PARAMS = [
+            "IncrementalTemperature", "IncrementalTint", "Exposure2012", "Contrast2012", "Highlights2012",
+            "Shadows2012", "Whites2012", "Blacks2012", "Texture", "Clarity2012", "Dehaze", "Vibrance",
+            "Saturation", "ParametricShadows", "ParametricDarks", "ParametricLights", "ParametricHighlights",
+            "ParametricShadowSplit", "ParametricMidtoneSplit", "ParametricHighlightSplit", "Sharpness",
+            "LuminanceSmoothing", "ColorNoiseReduction", "HueAdjustmentRed", "HueAdjustmentOrange",
+            "HueAdjustmentYellow", "HueAdjustmentGreen", "HueAdjustmentAqua", "HueAdjustmentBlue",
+            "HueAdjustmentPurple", "HueAdjustmentMagenta", "SaturationAdjustmentRed", "SaturationAdjustmentOrange",
+            "SaturationAdjustmentYellow", "SaturationAdjustmentGreen", "SaturationAdjustmentAqua",
+            "SaturationAdjustmentBlue", "SaturationAdjustmentPurple", "SaturationAdjustmentMagenta",
+            "LuminanceAdjustmentRed", "LuminanceAdjustmentOrange", "LuminanceAdjustmentYellow",
+            "LuminanceAdjustmentGreen", "LuminanceAdjustmentAqua", "LuminanceAdjustmentBlue",
+            "LuminanceAdjustmentPurple", "LuminanceAdjustmentMagenta", "SplitToningShadowHue",
+            "SplitToningShadowSaturation", "SplitToningHighlightHue", "SplitToningHighlightSaturation",
+            "SplitToningBalance", "ColorGradeMidtoneHue",
+            "ColorGradeMidtoneSat", "ColorGradeShadowLum", "ColorGradeMidtoneLum", "ColorGradeHighlightLum",
+            "ColorGradeBlending", "ColorGradeGlobalHue", "ColorGradeGlobalSat", "ColorGradeGlobalLum",
+            "AutoLateralCA", "LensProfileEnable", "LensManualDistortionAmount", "VignetteAmount",
+            "DefringePurpleAmount", "DefringePurpleHueLo", "DefringePurpleHueHi",
+            "DefringeGreenAmount", "DefringeGreenHueLo", "DefringeGreenHueHi",
+            "GrainAmount", "PostCropVignetteAmount", "ShadowTint",
+            "RedHue", "RedSaturation", "GreenHue", "GreenSaturation", "BlueHue", "BlueSaturation"
+        ];
+
+        let sliderValues = {};
+        let uploadedImage = null;
+
+        const sliderSection = document.getElementById('sliderSection');
+        PARAMS.forEach(p => {
+            sliderValues[p] = 0;
+            const container = document.createElement('div');
+            container.className = 'slider-container';
+            container.innerHTML = `
+                <label for="${p}">${p}</label>
+                <input type="range" id="${p}" name="${p}" min="-100" max="100" value="0" oninput="syncSlider('${p}', this.value)">
+                <input type="number" id="${p}_number" min="-100" max="100" value="0" onchange="syncNumber('${p}', this.value)">
+            `;
+            sliderSection.appendChild(container);
+        });
+
+        function syncSlider(param, value) {
+            document.getElementById(param + '_number').value = value;
+            updateParam(param, value);
+        }
+
+        function syncNumber(param, value) {
+            document.getElementById(param).value = value;
+            updateParam(param, value);
+        }
+
+        function updateParam(param, value) {
+            sliderValues[param] = parseFloat(value);
+            sendToServer();
+        }
+
+        document.getElementById('upload').addEventListener('change', async function () {
+            const file = this.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('image', file);
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                uploadedImage = data.filename;
+                sendToServer();
+            }
+        });
+
+        async function sendToServer() {
+            if (!uploadedImage) return;
+
+            const res = await fetch('/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: uploadedImage, params: sliderValues })
+            });
+
+            const data = await res.json();
+            document.getElementById('preview').src = `data:image/jpeg;base64,${data.image}`;
+        }
+    </script>
+</body>
+</html>
